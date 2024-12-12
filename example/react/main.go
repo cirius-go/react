@@ -48,6 +48,10 @@ func main() {
 		panic(fmt.Sprintf("failed on %s, error %v", f, err))
 	}
 
+	if f, err := react.React(at, appt); err != nil {
+		panic(fmt.Sprintf("failed on %s, error %v", f, err))
+	}
+
 	appt.Status = 2
 	if f, err := react.React(at, appt); err != nil {
 		panic(fmt.Sprintf("failed on %s, error %v", f, err))

@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+var ErrInvalidStatename = fmt.Errorf("invalid statename")
+
 // Atom represents a single entity.
 type Atom[E any] struct {
 	mu    sync.Mutex
@@ -27,18 +29,21 @@ func NewAtom[E any]() *Atom[E] {
 }
 
 // RegisterState register state of atom.
-func RegisterState[E any](a *Atom[E], name string, detector func(ent E) bool) {
+func RegisterState[E any](a *Atom[E], name string, detector func(ent E) bool) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	if a.muted {
-		return
+		return nil
 	}
 
-	if a.currentState == "" {
-		a.currentState = name
+	if name == "" {
+		return ErrInvalidStatename
 	}
+
 	a.detectorChanges[name] = detector
+
+	return nil
 }
 
 func OnState[E any](a *Atom[E], name string, f func() error) {
@@ -92,6 +97,9 @@ func React[E any](a *Atom[E], ent E) (string, error) {
 			events := []func() error{}
 			oldState := a.currentState
 			a.currentState = state
+			if oldState == a.currentState {
+				continue
+			}
 
 			tk := tranKey(oldState, a.currentState)
 			if evs, ok := a.onTransitionEvents[tk]; ok {
